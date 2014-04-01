@@ -23,6 +23,7 @@
           <br>
           <button id="startSeq">Start Auto Send</button>
           <input id="asyncOption" type="checkbox" checked="true">Asynchronous</input>
+          <input id="recycleOption" type="checkbox" checked="true">Recycle Data Object</input>
           <br>
           <br>
           <button id="postMessageButton">Post Single Message</button>
@@ -42,6 +43,7 @@
                         postButton = document.getElementById('postMessageButton'),
                         startButton = document.getElementById('startSeq'),
                         asyncCheckboxEl = document.getElementById('asyncOption'),
+                        recycleDataEl = document.getElementById('recycleOption'),
                         startButtonLabel = 'Start Auto Send',
 
                         responseTextEl = document.getElementById('response'),
@@ -57,7 +59,8 @@
                         repCount = parseInt(repCountEl.value),
                         isAutoPost = false,
                         isAsync = asyncCheckboxEl.checked,
-                        junk = null;
+                        junk = null,
+                        recycleData = recycleDataEl.checked;
 
                     document.body.appendChild(receiverEl);
 
@@ -86,6 +89,10 @@
 
 
                     function sendMessage(e) {
+                        if (!recycleData) {
+                            junk = null;
+                        }
+
                         junk = junk || makeJunk(junkSize);
 
                         // creating a blob with the Int8Array to verify byte size
@@ -150,7 +157,6 @@
                             repCount = parseInt(repCountEl.value);
                             startButton.innerHTML = startButtonLabel;
                             isAutoPost = false;
-                            junk = null;
                         }
                     }
 
@@ -176,6 +182,10 @@
 
                     asyncCheckboxEl.addEventListener('change', function(e) {
                         isAsync = asyncCheckboxEl.checked;
+                    });
+
+                    recycleDataEl.addEventListener('change', function(e) {
+                        recycleData = recycleDataEl.checked;
                     });
 
                     postButton.addEventListener('click', sendMessage);

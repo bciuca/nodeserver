@@ -1,0 +1,60 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" class=" en">
+    <head>
+    </head>
+    <body>
+        <h1>Receiver Window</h1>
+        <p>
+          HTTPS iframe
+        </p>
+        <div id="message"></div>
+
+        <script type="text/javascript">
+            (function() {
+                "use strict";
+
+                var receivedAcc = 0,
+                    receiveCount = 0;
+
+                console.log('HTTPS iframe window loaded');
+
+                var messageEle = document.getElementById('message'),
+                    receiver = null;
+
+                function receiveMessage(e) {
+                    // Check origin
+                    if (e.origin !== "http://localhost:3000")
+                      return;
+
+                    receiveCount++;
+
+                    var data = e.data,
+                        kb = data.data.buffer.byteLength / 1024,
+                        time = data.time,
+                        now = Date.now(),
+                        dif = (now - time);
+
+                    console.log('(iframe) received', receiveCount, now, time, dif);
+
+                    receivedAcc += dif;
+                    var mean = receivedAcc / receiveCount;
+
+                    messageEle.innerHTML = 'Message from parent<br>'
+                        + 'Payload size: ' + kb + ' KB<br>'
+                        + 'Tx time: ' + dif + ' ms<br>'
+                        + 'Mean Tx (n=' + receiveCount + '): ' + mean;
+
+                    // reset time
+                    data.time = Date.now();
+                    console.log('reset time for round trip', data.time);
+
+                    parent.postMessage(data, e.origin);
+
+                    data = null;
+                }
+
+                window.addEventListener('message', receiveMessage);
+            })();
+        </script>
+    </body>
+</html>

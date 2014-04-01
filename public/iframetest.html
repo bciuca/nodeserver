@@ -1,0 +1,189 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" class=" en">
+    <head>
+
+    </head>
+      <style>
+        body {
+          font-family: Arial;
+        }
+      </style>
+    <body>
+
+        <h1>Controller Window</h1>
+        <p>
+            HTTP Window
+        </p>
+        <p>
+          <label>Byte Size of Data to Send</label>
+          <input type="text" id="dataSize" value=102400></input>
+          <br>
+          <label>Reps</label>
+          <input type="text" id="reps" value="100"></input>
+          <br>
+          <button id="startSeq">Start Auto Send</button>
+          <input id="asyncOption" type="checkbox" checked="true">Asynchronous</input>
+          <br>
+          <br>
+          <button id="postMessageButton">Post Single Message</button>
+
+        </p>
+        <p id="response"></p>
+
+        <script type="text/javascript">
+            (function () {
+                "use strict";
+
+                window.onload = function() {
+                    console.log('HTTP host window loaded');
+
+                    var srchost = 'https://localhost:3001',
+                        receiverEl = document.createElement('iframe'),
+                        postButton = document.getElementById('postMessageButton'),
+                        startButton = document.getElementById('startSeq'),
+                        asyncCheckboxEl = document.getElementById('asyncOption'),
+                        startButtonLabel = 'Start Auto Send',
+
+                        responseTextEl = document.getElementById('response'),
+                        receiver = null,
+
+                        repCountEl = document.getElementById('reps'),
+                        junkSizeEl = document.getElementById('dataSize'),
+
+                        // byte length of data to send via postMessage to the iframe
+                        junkSize = parseInt(junkSizeEl.value),
+                        receivedAcc = 0,
+                        receiveCount = 0,
+                        repCount = parseInt(repCountEl.value),
+                        isAutoPost = false,
+                        isAsync = asyncCheckboxEl.checked,
+                        junk = null;
+
+                    document.body.appendChild(receiverEl);
+
+                    receiverEl.setAttribute('src', srchost + '/receiver.html');
+                    receiverEl.setAttribute('width', 600);
+                    receiverEl.setAttribute('height', 300);
+                    receiverEl.setAttribute('onerror', 'iframeErrorHandler');
+                    receiver = receiverEl.contentWindow;
+
+                    function iframeErrorHandler(e) {
+                        console.log('error in iframe', arguments)
+                    }
+
+                    // make junk data object of set byte size
+                    function makeJunk(size) {
+                        console.log('make junk of size ' + size);
+                        var ar = new Int8Array(size),
+                            time = Date.now();
+
+                        for (var i = 0; i < size; i++) {
+                            ar[i] = ~~(Math.random() * 128);
+                        }
+
+                        return ar;
+                    }
+
+
+                    function sendMessage(e) {
+                        junk = junk || makeJunk(junkSize);
+
+                        // creating a blob with the Int8Array to verify byte size
+                        //var blob = new Blob([junk], {type: 'application/octet-binary'});
+                        //console.log('blob byte size is ', blob.size);
+
+                      //  console.log('junk byte size is ', junk.buffer.byteLength);
+
+                        var message = {
+                            time: Date.now(),
+                            data: junk,
+                            text: ''
+                        };
+
+                        console.log('posting now', message.time);
+
+                        try {
+                            receiver.postMessage(message, srchost);
+                        } catch (e) {
+                            console.log('error posting message', e);
+                        }
+
+                        message = null;
+                    }
+
+                    // incoming message from iframe
+                    function receiveMessage(e) {
+                      // Check origin. Only expecting messages from iframe origin
+                      if (e.origin !== srchost)
+                        return;
+
+                        receiveCount++;
+
+                        var data = e.data,
+                            kb = data.data.buffer.byteLength / 1024,
+                            time = data.time,
+                            now = Date.now(),
+                            dif = (now - time);
+
+                        console.log('(parent) received', receiveCount, now, time, dif);
+
+                        receivedAcc += dif;
+                        var mean = receivedAcc / receiveCount;
+
+                        responseTextEl.innerHTML = 'Message from iframe<br>'
+                            + 'Payload size: ' + kb + ' KB<br>'
+                            + 'Tx time: ' + dif + ' ms<br>'
+                            + 'Mean Tx (n=' + receiveCount + '): ' + mean;
+
+                        if (isAsync) {
+                            startAutoSend();
+                        }
+                    }
+
+                    function startAutoSend() {
+                        if (isAutoPost && --repCount > 0) {
+                          sendMessage();
+                          if (!isAsync) {
+                              startAutoSend();
+                          }
+                        } else {
+                            repCount = parseInt(repCountEl.value);
+                            startButton.innerHTML = startButtonLabel;
+                            isAutoPost = false;
+                            junk = null;
+                        }
+                    }
+
+                    function toggleAuto(e) {
+                        isAutoPost = !isAutoPost;
+                        e.currentTarget.innerHTML = isAutoPost ? 'Stop' : startButtonLabel;
+                        sendMessage();
+
+                        if (!isAsync) {
+                            startAutoSend();
+                        }
+                    }
+
+
+                    // Wire up event listeners
+                    junkSizeEl.addEventListener('change', function(e) {
+                        junkSize = parseInt(junkSizeEl.value);
+                    });
+
+                    repCountEl.addEventListener('change', function(e) {
+                        repCount = parseInt(repCountEl.value);
+                    });
+
+                    asyncCheckboxEl.addEventListener('change', function(e) {
+                        isAsync = asyncCheckboxEl.checked;
+                    });
+
+                    postButton.addEventListener('click', sendMessage);
+                    startButton.addEventListener('click', toggleAuto);
+
+                    window.addEventListener('message', receiveMessage);
+                }
+            })();
+        </script>
+    </body>
+</html>

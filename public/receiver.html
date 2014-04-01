@@ -1,6 +1,11 @@
 <!doctype html>
 <html xmlns="http://www.w3.org/1999/xhtml" class=" en">
     <head>
+      <style>
+        body {
+          font-family: Arial;
+        }
+      </style>
     </head>
     <body>
         <h1>Receiver Window</h1>
@@ -14,12 +19,11 @@
                 "use strict";
 
                 var receivedAcc = 0,
-                    receiveCount = 0;
+                    receiveCount = 0,
+                    messageEle = document.getElementById('message'),
+                    receiver = null;
 
                 console.log('HTTPS iframe window loaded');
-
-                var messageEle = document.getElementById('message'),
-                    receiver = null;
 
                 function receiveMessage(e) {
                     // Check origin
@@ -48,7 +52,11 @@
                     data.time = Date.now();
                     console.log('reset time for round trip', data.time);
 
-                    parent.postMessage(data, e.origin);
+                    try {
+                        parent.postMessage(data, e.origin);
+                    } catch (e) {
+                        console.log('error posting message from iframe', e);
+                    }
 
                     data = null;
                 }

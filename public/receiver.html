@@ -23,8 +23,6 @@
                     messageEle = document.getElementById('message'),
                     receiver = null;
 
-                console.log('HTTPS iframe window loaded');
-
                 function receiveMessage(e) {
                     // Check origin
                     if (e.origin !== "http://localhost:3000")
@@ -38,8 +36,6 @@
                         now = Date.now(),
                         dif = (now - time);
 
-                    console.log('(iframe) received', receiveCount, now, time, dif);
-
                     receivedAcc += dif;
                     var mean = receivedAcc / receiveCount;
 
@@ -50,13 +46,10 @@
 
                     // reset time
                     data.time = Date.now();
-                    console.log('reset time for round trip', data.time);
 
                     try {
                         parent.postMessage(data, e.origin);
-                    } catch (e) {
-                        console.log('error posting message from iframe', e);
-                    }
+                    } catch (e) { }
 
                     data = null;
                 }

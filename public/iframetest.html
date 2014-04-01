@@ -22,8 +22,8 @@
           <input type="text" id="reps" value="100"></input>
           <br>
           <button id="startSeq">Start Auto Send</button>
-          <input id="asyncOption" type="checkbox" checked="true">Asynchronous</input>
-          <input id="recycleOption" type="checkbox" checked="true">Recycle Data Object</input>
+          <input id="asyncOption" type="checkbox">Asynchronous</input>
+          <input id="recycleOption" type="checkbox" checked="checked">Recycle Data Object</input>
           <br>
           <br>
           <button id="postMessageButton">Post Single Message</button>
@@ -34,9 +34,6 @@
         <script type="text/javascript">
             (function () {
                 "use strict";
-
-
-                console.log('HTTP host window loaded');
 
                 var srchost = 'https://localhost:3001',
                     receiverEl = document.createElement('iframe'),
@@ -67,16 +64,10 @@
                 receiverEl.setAttribute('src', srchost + '/receiver.html');
                 receiverEl.setAttribute('width', 600);
                 receiverEl.setAttribute('height', 300);
-                receiverEl.setAttribute('onerror', 'iframeErrorHandler');
                 receiver = receiverEl.contentWindow;
-
-                function iframeErrorHandler(e) {
-                    console.log('error in iframe', arguments)
-                }
 
                 // make junk data object of set byte size
                 function makeJunk(size) {
-                    console.log('make junk of size ' + size);
                     var ar = new Int8Array(size),
                         time = Date.now();
 
@@ -95,25 +86,15 @@
 
                     junk = junk || makeJunk(junkSize);
 
-                    // creating a blob with the Int8Array to verify byte size
-                    //var blob = new Blob([junk], {type: 'application/octet-binary'});
-                    //console.log('blob byte size is ', blob.size);
-
-                  //  console.log('junk byte size is ', junk.buffer.byteLength);
-
                     var message = {
                         time: Date.now(),
                         data: junk,
                         text: ''
                     };
 
-                    console.log('posting now', message.time);
-
                     try {
                         receiver.postMessage(message, srchost);
-                    } catch (e) {
-                        console.log('error posting message', e);
-                    }
+                    } catch (e) { }
 
                     message = null;
                 }
@@ -131,8 +112,6 @@
                         time = data.time,
                         now = Date.now(),
                         dif = (now - time);
-
-                    console.log('(parent) received', receiveCount, now, time, dif);
 
                     receivedAcc += dif;
                     var mean = receivedAcc / receiveCount;
@@ -174,6 +153,7 @@
                 // Wire up event listeners
                 junkSizeEl.addEventListener('change', function(e) {
                     junkSize = parseInt(junkSizeEl.value);
+                    junk = null; // clear junk when setting the size
                 });
 
                 repCountEl.addEventListener('change', function(e) {

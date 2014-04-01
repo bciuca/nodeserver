@@ -81,7 +81,7 @@
                         time = Date.now();
 
                     for (var i = 0; i < size; i++) {
-                        ar[i] = ~~(Math.random() * 128);
+                        ar[i] = Math.floor(Math.random() * 128);
                     }
 
                     return ar;
